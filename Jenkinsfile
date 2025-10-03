@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS =dckr_pat_rD44YYUQrIk8SQLdYH1IDKtebWA
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub_token') // Jenkins secret ID
         IMAGE_NAME = 'harshaa1424/mini-project-1'
     }
 
@@ -24,7 +24,7 @@ pipeline {
         stage('Push to DockerHub') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-creds') {
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKERHUB_CREDENTIALS) {
                         docker.image("${IMAGE_NAME}:latest").push()
                     }
                 }
@@ -34,19 +34,5 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                kubectl config use-context terraform-user-new@trend-cluster.us-east-1.eksctl.io
-                kubectl set image deployment/trend-app-deployment  trend-app=${IMAGE_NAME}:latest
-                '''
-            }
-        }
-    }
+                kubectl config use-context terraform-user-new@trend-cluster.us-east-1.ek
 
-    post {
-        success {
-            echo 'Build, push, and deploy successful!'
-        }
-        failure {
-            echo 'Pipeline failed.'
-        }
-    }
-}
